@@ -13,24 +13,25 @@
 #define MAX_PIPES 5
 #define MAX_HISTORY 50
 
-char cmd[MAX_SIZE_CMD];
-char *argv[MAX_SIZE_ARG];
-pid_t pid;
+char cmd[MAX_SIZE_CMD]; // holds the command
+char *argv[MAX_SIZE_ARG];   // an array for arguments and command
+pid_t pid;  // global variable for the child process ID
 char i;
 
 typedef struct
 {
-    char command[MAX_SIZE_CMD];
-    pid_t pid;
-    double exec_time;
-    struct timeval start_time;
+    char command[MAX_SIZE_CMD]; // command string
+    pid_t pid;  // process ID of the command
+    double exec_time;    // time to execute the command in seconds
+    struct timeval start_time;  // time when the command started
 } CommandHistory;
 
-CommandHistory history[MAX_HISTORY];
-int history_count = 0;
+CommandHistory history[MAX_HISTORY];    // history array with additional details
+int history_count = 0;  // counter for history
 
 void getCmd()
 {
+    // get command string from user
     printf("Welcome, my master. I am Shell>>    ");
 
     if (fgets(cmd, MAX_SIZE_CMD, stdin) == NULL)
@@ -46,9 +47,11 @@ void getCmd()
 
 void printFullHistory()
 {
+    // print full command history on exit
     printf("Full command history:\n");
     for (int i = 0; i < history_count; i++)
     {
+        // convert start time to human-readable format
         struct tm* start_time_info;
         char start_time_str[30];
         start_time_info = localtime(&history[i].start_time.tv_sec);
@@ -70,6 +73,7 @@ void printFullHistory()
 
 void displayHistory()
 {
+    // display command history
     printf("Command history:\n");
     for (int i = 0; i < history_count; i++) {
         printf("%d: %s\n", i + 1, history[i].command);
@@ -78,6 +82,7 @@ void displayHistory()
 
 void convertCmd(char *cmd_string, char **argv)
 {
+    // convert the command string to the required format
     char *ptr;
     i = 0;
     ptr = strtok(cmd_string, " ");
@@ -93,6 +98,7 @@ void convertCmd(char *cmd_string, char **argv)
 
 int executePipeCmd(char *cmds[], int num_pipes)
 {
+    // handles multiple piped commands
     int pipefd[MAX_PIPES][2];
     pid_t pids[MAX_PIPES + 1];
     int i;
@@ -155,6 +161,7 @@ int executePipeCmd(char *cmds[], int num_pipes)
 
 void handleSigint(int sig)
 {
+    // signal handler to handle ctrl +c
     printf("\nCtrl+C detected. Printing history before exiting...\n");
     printFullHistory();
     exit(0);
@@ -162,34 +169,42 @@ void handleSigint(int sig)
 
 void launch()
 {
+    // starts the shell
     while (1)
     {
+        // get the command from user
         getCmd();
 
+        // bypass empty commands
         if (!strcmp("", cmd))
         {
             continue;
         }
 
+        // check for "exit" command
         if (!strcmp("exit", cmd))
         {
             printFullHistory();
             break;
         }
 
+        // check for "history" command
         if (!strcmp("history", cmd))
         {
             displayHistory();
             continue;
         }
 
+        // save command to history
         if (history_count < MAX_HISTORY)
         {
             strcpy(history[history_count].command, cmd);
 
+            // record the start time
             gettimeofday(&history[history_count].start_time, NULL);
         }
 
+        // split command into parts based on '|'
         char *cmds[MAX_PIPES + 1];
         int num_pipes = 0;
         cmds[num_pipes] = strtok(cmd, "|");
@@ -201,12 +216,15 @@ void launch()
 
         if (num_pipes > 1)
         {
+            // execute command with pipes
             executePipeCmd(cmds, num_pipes - 1);
         }
         else
         {
+            // fit the command into *argv[]
             convertCmd(cmd, argv);
 
+            // fork and execute the command
             pid = fork();
             if (-1 == pid)
             {
@@ -215,22 +233,26 @@ void launch()
             }
             else if (0 == pid)
             {
+                // execute a command
                 execvp(argv[0], argv);
                 perror("Command execution failed");
                 exit(EXIT_FAILURE);
             }
             else
             {
+                // store the PID in history
                 if (history_count < MAX_HISTORY)
                 {
                     history[history_count].pid = pid;
                 }
 
+                // wait for the command to finish
                 struct timeval end_time;
                 if (NULL == argv[i])
                 {
                     waitpid(pid, NULL, 0);
 
+                    // record the end time and calculate execution time
                     gettimeofday(&end_time, NULL);
                     if (history_count < MAX_HISTORY)
                     {
@@ -247,8 +269,10 @@ void launch()
 
 int main()
 {
+    // tie the handler to the SIGINT signal (Ctrl+C)
     signal(SIGINT, handleSigint);
 
+    // start the shell
     launch();
 
     return 0;
