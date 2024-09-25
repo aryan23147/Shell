@@ -1,0 +1,18 @@
+Limitations of Our Shell:
+Cannot run the commands like cd as we cant change the current directory of our shell programme
+We haven't given any background support so all those command cant run like bg and fg
+We don't access internal env variables so we cant do commands like echo $USER etc
+We haven't used io redirection to transfer one command output to another file
+
+Group number: 21
+Members:
+Aryan Singhal (2023147)  Aditya Verma (2023051)
+Contribution:
+We did all the work together so the contribution is equal
+
+GitHub link:
+https://github.com/aryan23147/Shell
+
+DESIGN:
+We have a parent shell programme which calls some child process using excevp with some commands and arguments, and those commands get executed
+We added functionality for pipes using pair of file descriptors and also created structure to make history for our shell and used signal handler to exit the shell after pressing ctrl c and history gets printed after that
