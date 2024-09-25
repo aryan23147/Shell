@@ -11,3 +11,6 @@ Contribution
 We did all the work together so the contribution is equal
 GitHub link
 https://github.com/aryan23147/Shell
+DESIGN
+We have a parent shell programme which calls some child process using excev with some commands and that commands gets executed
+We added functionality for pipes using pair of file descriptors and also created structure to make history for our shell and used signal handlers to exit the shell after pressing ctrl c and history gets printed after that 
